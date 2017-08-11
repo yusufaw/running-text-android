@@ -19,8 +19,6 @@ public class MainActivity extends Activity {
     private RunningTextAdapter adapter;
 
     private Handler handlerRunningAds = new Handler();
-    private List<AdsRunningText> runningTextList = new ArrayList<>();
-    private int intIdCurrentRunningAds;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,7 +40,7 @@ public class MainActivity extends Activity {
             public void smoothScrollToPosition(RecyclerView recyclerView, RecyclerView.State state, int position) {
                 LinearSmoothScroller smoothScroller = new LinearSmoothScroller(MainActivity.this) {
 
-                    private static final float SPEED = 4000f;
+                    private static final float SPEED = 5000f;
 
                     @Override
                     protected float calculateSpeedPerPixel(DisplayMetrics displayMetrics) {
@@ -58,22 +56,6 @@ public class MainActivity extends Activity {
         adapter = new RunningTextAdapter(adsRunningTextList);
         recyclerView.setAdapter(adapter);
 
-        recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
-            @Override
-            public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
-                super.onScrollStateChanged(recyclerView, newState);
-                Log.d(TAG, "new state: " + newState);
-                if (newState > 0) {
-                    Log.d(TAG, "move items");
-                    adapter.moveItems();
-                    adapter.notifyDataSetChanged();
-                    recyclerView.setAdapter(adapter);
-                }
-            }
-        });
-
-        runningTextList = adsRunningTextList;
-
         autoScroll();
     }
 
@@ -84,26 +66,17 @@ public class MainActivity extends Activity {
     private Runnable runnableRunningAds = new Runnable() {
         @Override
         public void run() {
-            Integer intPositionRun = ((LinearLayoutManager)recyclerView.getLayoutManager()).findFirstCompletelyVisibleItemPosition();
-            if (0 <= intPositionRun && intPositionRun < adapter.getData().size()) {
-                AdsRunningText adsRunningTextAdapter = adapter.getData().get(intPositionRun);
-
-                AdsRunningText adsRunningTextCurrent = new AdsRunningText();
-                for (AdsRunningText adsRunningText :
-                        runningTextList) {
-                    if (adsRunningTextAdapter.intId == adsRunningText.intId) {
-                        adsRunningTextCurrent = adsRunningText;
-                        break;
-                    }
-                }
-                Log.d(TAG, "Run auto scroll " + adsRunningTextCurrent.intId+ " - " + adsRunningTextCurrent.strBody + " = "+ adsRunningTextCurrent.intTotalPlayed);
-                if (intIdCurrentRunningAds != adsRunningTextCurrent.intId) {
-                    intIdCurrentRunningAds = adsRunningTextCurrent.intId;
-                }
-                recyclerView.smoothScrollToPosition(adapter.getItemCount());
-
-                handlerRunningAds.postDelayed(this, 1000);
+            Integer intPosition = ((LinearLayoutManager)recyclerView.getLayoutManager()).findFirstVisibleItemPosition();
+            if (intPosition == 1) {
+                adapter.getData().get(0).intTotalPlayed++;
+                Log.d(TAG, "index: " + adapter.getData().get(0).intId + "total: " + adapter.getData().get(0).intTotalPlayed);
+                adapter.moveItems();
+                adapter.notifyDataSetChanged();
+                recyclerView.setAdapter(adapter);
             }
+            recyclerView.smoothScrollToPosition(adapter.getItemCount());
+
+            handlerRunningAds.postDelayed(this, 10);
         }
     };
 
